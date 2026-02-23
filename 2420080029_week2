@@ -1,0 +1,46 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+
+df = pd.read_csv("/content/Titanic-Dataset.csv")
+
+print("Number of rows:", df.shape[0])
+print("Number of columns:", df.shape[1])
+
+print("\nMissing values per column:")
+print(df.isnull().sum())
+
+df['Age'] = df['Age'].fillna(df['Age'].median())
+df['Embarked'] = df['Embarked'].fillna(df['Embarked'].mode()[0])
+
+df = df.drop(columns=['PassengerId', 'Name', 'Ticket', 'Cabin'])
+
+Q1 = df['Fare'].quantile(0.25)
+Q3 = df['Fare'].quantile(0.75)
+IQR = Q3 - Q1
+
+lower = Q1 - 1.5 * IQR
+upper = Q3 + 1.5 * IQR
+
+df['Fare'] = df['Fare'].clip(lower, upper)
+
+df = pd.get_dummies(df, columns=['Sex', 'Embarked'], drop_first=True)
+
+le = LabelEncoder()
+for col in df.select_dtypes(include='object').columns:
+    df[col] = le.fit_transform(df[col])
+X = df.drop('Survived', axis=1)
+y = df['Survived']
+
+X_train, X_temp, y_train, y_temp = train_test_split(
+    X, y, test_size=0.30, random_state=42
+)
+
+X_val, X_test, y_val, y_test = train_test_split(
+    X_temp, y_temp, test_size=0.50, random_state=42
+)
+print("\nSplit Shapes:")
+print("Training:", X_train.shape, y_train.shape)
+print("Validation:", X_val.shape, y_val.shape)
+print("Testing:", X_test.shape, y_test.shape)
