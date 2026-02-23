@@ -1,0 +1,74 @@
+# ===============================
+# EXPERIMENT 5
+# ===============================
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.tree import export_text
+
+# -------------------------------
+# PART A: MANUAL CALCULATION
+# -------------------------------
+
+def gini(y):
+    classes = np.unique(y)
+    gini = 1
+    for cls in classes:
+        p = np.sum(y == cls) / len(y)
+        gini -= p**2
+    return gini
+
+def entropy(y):
+    classes = np.unique(y)
+    ent = 0
+    for cls in classes:
+        p = np.sum(y == cls) / len(y)
+        ent -= p*np.log2(p)
+    return ent
+
+sample_y = np.array([0,0,1,1,1])
+print("Gini:", gini(sample_y))
+print("Entropy:", entropy(sample_y))
+
+# -------------------------------
+# PART B: IMPLEMENTATION
+# -------------------------------
+
+data = load_iris()
+X = data.data
+y = data.target
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+tree_gini = DecisionTreeClassifier(criterion='gini', max_depth=3)
+tree_entropy = DecisionTreeClassifier(criterion='entropy', max_depth=3)
+
+tree_gini.fit(X_train, y_train)
+tree_entropy.fit(X_train, y_train)
+
+print("Accuracy (Gini):", accuracy_score(y_test, tree_gini.predict(X_test)))
+print("Accuracy (Entropy):", accuracy_score(y_test, tree_entropy.predict(X_test)))
+
+# Plot Trees
+plt.figure(figsize=(12,6))
+plot_tree(tree_gini, feature_names=data.feature_names, class_names=data.target_names, filled=True)
+plt.show()
+
+plt.figure(figsize=(12,6))
+plot_tree(tree_entropy, feature_names=data.feature_names, class_names=data.target_names, filled=True)
+plt.show()
+
+# Feature Importance
+print("Feature Importance (Gini):", tree_gini.feature_importances_)
+print("Feature Importance (Entropy):", tree_entropy.feature_importances_)
+
+# Cost Complexity Pruning
+path = tree_gini.cost_complexity_pruning_path(X_train, y_train)
+print("CCP Alphas:", path.ccp_alphas)
+
+# Decision Rules
+print(export_text(tree_gini, feature_names=data.feature_names))
