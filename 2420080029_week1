@@ -1,0 +1,26 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+data = sns.load_dataset("iris")
+
+print("First 5 rows of the dataset:")
+print(data.head())
+
+print("\nDataset Information:")
+print(data.info())
+
+print("\nStatistical Description:")
+print(data.describe())
+
+plt.figure()
+plt.hist(data['sepal_length'])
+plt.title("Histogram of Sepal Length")
+plt.xlabel("Sepal Length")
+plt.ylabel("Frequency")
+plt.show()
+
+plt.figure()
+sns.countplot(x='species', data=data)
+plt.title("Count of Each Iris Species")
+plt.show()
