@@ -1,0 +1,100 @@
+# ===============================
+# EXPERIMENT 4
+# ===============================
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_regression, load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression, LogisticRegression, Ridge, Lasso
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_curve, auc
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import cross_val_score
+import seaborn as sns
+
+# -------------------------------
+# PART A: LINEAR REGRESSION
+# -------------------------------
+
+X, y = make_regression(n_samples=200, n_features=1, noise=20, random_state=42)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+print("MSE:", mean_squared_error(y_test, y_pred))
+print("MAE:", mean_absolute_error(y_test, y_pred))
+print("R2 Score:", r2_score(y_test, y_pred))
+print("Coefficient:", model.coef_)
+print("Intercept:", model.intercept_)
+
+plt.scatter(X_test, y_test)
+plt.plot(X_test, y_pred, color='red')
+plt.title("Linear Regression")
+plt.show()
+
+# Ridge and Lasso
+ridge = Ridge(alpha=1.0)
+ridge.fit(X_train, y_train)
+lasso = Lasso(alpha=0.1)
+lasso.fit(X_train, y_train)
+
+# Polynomial Regression
+poly_model = make_pipeline(PolynomialFeatures(3), LinearRegression())
+poly_model.fit(X_train, y_train)
+
+# Cross Validation
+cv_scores = cross_val_score(model, X, y, cv=5)
+print("Cross Validation Scores:", cv_scores)
+
+# -------------------------------
+# PART B: LOGISTIC REGRESSION
+# -------------------------------
+
+data = load_breast_cancer()
+X = data.data
+y = data.target
+
+X_train, X_test, y_train, y_test = train_test_split(X[:, :2], y, test_size=0.2, random_state=42)
+
+log_model = LogisticRegression(max_iter=500)
+log_model.fit(X_train, y_train)
+
+y_pred = log_model.predict(X_test)
+
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+
+# Confusion Matrix Plot
+sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt='d')
+plt.title("Confusion Matrix")
+plt.show()
+
+# Decision Boundary
+x_min, x_max = X_train[:, 0].min()-1, X_train[:, 0].max()+1
+y_min, y_max = X_train[:, 1].min()-1, X_train[:, 1].max()+1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                     np.arange(y_min, y_max, 0.1))
+
+Z = log_model.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+
+plt.contourf(xx, yy, Z, alpha=0.3)
+plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train)
+plt.title("Decision Boundary")
+plt.show()
+
+# ROC Curve
+y_prob = log_model.predict_proba(X_test)[:,1]
+fpr, tpr, _ = roc_curve(y_test, y_prob)
+roc_auc = auc(fpr, tpr)
+
+plt.plot(fpr, tpr)
+plt.title("ROC Curve (AUC = %0.2f)" % roc_auc)
+plt.show()
