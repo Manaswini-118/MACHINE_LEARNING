@@ -1,0 +1,69 @@
+# ===============================
+# EXPERIMENT 7
+# ===============================
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_digits
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import RandomizedSearchCV
+import time
+
+data = load_digits()
+X = data.data
+y = data.target
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# -------------------------------
+# RANDOM FOREST
+# -------------------------------
+
+rf = RandomForestClassifier(n_estimators=100, max_depth=10, oob_score=True)
+rf.fit(X_train, y_train)
+
+print("Random Forest Accuracy:", accuracy_score(y_test, rf.predict(X_test)))
+print("OOB Score:", rf.oob_score_)
+
+plt.bar(range(len(rf.feature_importances_)), rf.feature_importances_)
+plt.title("Feature Importance - RF")
+plt.show()
+
+# -------------------------------
+# ADABOOST
+# -------------------------------
+
+ada = AdaBoostClassifier(
+    base_estimator=DecisionTreeClassifier(max_depth=1),
+    n_estimators=100,
+    learning_rate=1.0
+)
+
+ada.fit(X_train, y_train)
+
+print("AdaBoost Accuracy:", accuracy_score(y_test, ada.predict(X_test)))
+
+# -------------------------------
+# GRADIENT BOOSTING
+# -------------------------------
+
+gb = GradientBoostingClassifier()
+gb.fit(X_train, y_train)
+print("Gradient Boosting Accuracy:", accuracy_score(y_test, gb.predict(X_test)))
+
+# -------------------------------
+# RANDOMIZED SEARCH
+# -------------------------------
+
+param_dist = {
+    "n_estimators":[50,100,150],
+    "max_depth":[5,10,15]
+}
+
+random_search = RandomizedSearchCV(RandomForestClassifier(), param_dist, cv=3)
+random_search.fit(X_train, y_train)
+
+print("Best RF Params:", random_search.best_params_)
